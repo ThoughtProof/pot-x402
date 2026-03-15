@@ -29,8 +29,11 @@ interface MaiatVerdict {
 }
 
 async function checkMaiatTrust(agentAddress: string): Promise<MaiatVerdict> {
+  // Maiat API v2: app.maiat.io/api/v1/agent/{address}
+  // Returns: { trustScore, verdict, dataSource, breakdown, erc8004 }
   const res = await fetch(
-    `https://maiat-protocol.vercel.app/api/v1/trust-check?agent=${agentAddress}`
+    `https://app.maiat.io/api/v1/agent/${agentAddress}`,
+    { redirect: 'follow' },
   );
 
   if (!res.ok) {
@@ -40,10 +43,10 @@ async function checkMaiatTrust(agentAddress: string): Promise<MaiatVerdict> {
   const data = await res.json();
   return {
     address: agentAddress,
-    score: data.score ?? 0,
-    verdict: data.verdict ?? 'block',
-    reviewCount: data.reviewCount,
-    contractAge: data.contractAge,
+    score: data.trustScore ?? 0,
+    verdict: data.verdict ?? 'unknown',
+    reviewCount: data.breakdown?.reviewCount,
+    contractAge: data.breakdown?.contractAge,
   };
 }
 
