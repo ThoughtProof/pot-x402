@@ -24,6 +24,10 @@
  */
 
 import { verify } from 'pot-sdk';
+
+// Re-export RNWY integration
+export { checkRNWY, analyzeReviewers, reputationWeight, buildTrustedContext } from './rnwy.js';
+export type { RNWYTrustCheck, RNWYReviewerAnalysis } from './rnwy.js';
 import type { StakeLevel, TrustContext } from 'pot-sdk';
 
 // Re-export for convenience
