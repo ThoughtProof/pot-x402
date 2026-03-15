@@ -32,6 +32,13 @@ export interface RNWYTrustCheck {
   reason: string;
 }
 
+export interface RNWYReviewer {
+  address: string;
+  ageAtReviewDays: number;
+  currentAgeDays: number;
+  classification: 'same_day' | 'recent' | 'young' | 'maturing' | 'established' | 'veteran';
+}
+
 export interface RNWYReviewerAnalysis {
   agentId: number;
   chain: string;
@@ -50,7 +57,19 @@ export interface RNWYReviewerAnalysis {
   summary: {
     sameDayPct: number;
     lowHistoryPct: number;
+    lowHistoryCount: number;
+    establishedPct: number;
+    establishedCount: number;
   };
+  sybilFlags?: string[];
+  clustering?: {
+    batchCount: number;
+    walletsInBatches: number;
+    batchPct: number;
+    largestBatch: number;
+  };
+  /** Individual reviewer data — available for deep analysis */
+  reviewers?: RNWYReviewer[];
 }
 
 /**
@@ -88,6 +107,78 @@ export async function analyzeReviewers(agentId: number, chain: string = 'base'):
   }
 
   return res.json() as Promise<RNWYReviewerAnalysis>;
+}
+
+/**
+ * Reviewer classification weights for deep mode.
+ * Based on wallet maturity at time of review.
+ * Credit: Pablo (RNWY) — "pre-computed wallet maturity per reviewer"
+ */
+export const REVIEWER_WEIGHTS: Record<string, number> = {
+  same_day: 0.05,    // almost certainly sybil
+  recent: 0.20,      // under 3 days — suspicious
+  young: 0.40,       // under 15 days — low confidence
+  maturing: 0.60,    // under 30 days — moderate
+  established: 0.85, // under 1 year — credible
+  veteran: 1.00,     // over 1 year — high credibility
+};
+
+/**
+ * Calculate a weighted reputation score from reviewer-level data.
+ * Instead of using RNWY's aggregate score, this computes a
+ * reputation quality metric from individual reviewer classifications.
+ *
+ * This is the "deeper mode" Pablo suggested — weighting each
+ * reviewer's contribution by their wallet maturity.
+ *
+ * @returns Weighted score 0-100
+ */
+export function weightedReviewerScore(analysis: RNWYReviewerAnalysis): number {
+  const dist = analysis.distribution;
+  const total = analysis.totalReviews;
+  if (total === 0) return 0;
+
+  const weightedSum =
+    (dist.sameDay * REVIEWER_WEIGHTS.same_day) +
+    (dist.under3d * REVIEWER_WEIGHTS.recent) +
+    (dist.under15d * REVIEWER_WEIGHTS.young) +
+    (dist.under30d * REVIEWER_WEIGHTS.maturing) +
+    (dist.under1yr * REVIEWER_WEIGHTS.established) +
+    (dist.over1yr * REVIEWER_WEIGHTS.veteran);
+
+  return Math.round((weightedSum / total) * 100);
+}
+
+/**
+ * Build an enhanced trust context using reviewer-level analysis.
+ * More granular than buildTrustedContext() — uses per-reviewer
+ * wallet maturity weights instead of just the aggregate score.
+ */
+export function buildDeepTrustedContext(
+  trustCheck: RNWYTrustCheck,
+  reviewerAnalysis: RNWYReviewerAnalysis,
+  additionalContext?: string,
+): string {
+  const weightedScore = weightedReviewerScore(reviewerAnalysis);
+  const weight = reputationWeight(trustCheck.score);
+  const sybilPct = reviewerAnalysis.summary.sameDayPct;
+
+  const lines = [
+    `RNWY Deep Analysis: Agent "${trustCheck.name}" (ID: ${trustCheck.agentId}, chain: ${trustCheck.chain}).`,
+    `Aggregate trust score: ${trustCheck.score}/100 (tier: ${trustCheck.tier}).`,
+    `Reviewer-weighted score: ${weightedScore}/100 (weighted by wallet maturity).`,
+    `Total reviews: ${reviewerAnalysis.totalReviews} from ${reviewerAnalysis.uniqueReviewers} unique wallets.`,
+    `Same-day reviewers: ${sybilPct}%${sybilPct > 50 ? ' ⚠️ HIGH SYBIL SIGNAL' : ''}.`,
+    `Reputation context weight: ${weight.toFixed(2)}.`,
+  ];
+
+  if (reviewerAnalysis.sybilFlags?.length) {
+    lines.push(`Sybil flags: ${reviewerAnalysis.sybilFlags.join('; ')}`);
+  }
+
+  if (additionalContext) lines.push(additionalContext);
+
+  return lines.join('\n');
 }
 
 /**
