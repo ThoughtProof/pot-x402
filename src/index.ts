@@ -25,9 +25,13 @@
 
 import { verify } from 'pot-sdk';
 
-// Re-export RNWY integration
+// Re-export RNWY integration (reviewer legitimacy)
 export { checkRNWY, analyzeReviewers, reputationWeight, buildTrustedContext } from './rnwy.js';
 export type { RNWYTrustCheck, RNWYReviewerAnalysis } from './rnwy.js';
+
+// Re-export Maiat integration (behavioral trust scoring)
+export { checkMaiat, maiatReputationWeight, buildMaiatContext } from './maiat.js';
+export type { MaiatAgentCheck } from './maiat.js';
 import type { StakeLevel, TrustContext } from 'pot-sdk';
 
 // Re-export for convenience
