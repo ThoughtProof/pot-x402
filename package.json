@@ -1,0 +1,38 @@
+{
+  "name": "@pot-sdk2/x402",
+  "version": "0.1.0",
+  "description": "ThoughtProof decision verification hook for x402 payments — verifies whether an agent's payment decision is well-justified before settlement",
+  "main": "dist/index.js",
+  "module": "dist/index.mjs",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "scripts": {
+    "build": "tsup src/index.ts --format cjs,esm --dts",
+    "test": "tsx src/__tests__/hook.test.ts"
+  },
+  "keywords": [
+    "x402",
+    "thoughtproof",
+    "decision-verification",
+    "agent-payments",
+    "pot-sdk"
+  ],
+  "license": "MIT",
+  "peerDependencies": {
+    "@x402/core": ">=2.0.0",
+    "pot-sdk": ">=1.1.0"
+  },
+  "devDependencies": {
+    "@x402/core": "^2.6.0",
+    "pot-sdk": "^1.1.0",
+    "tsup": "^8.5.1",
+    "tsx": "^4.21.0",
+    "typescript": "^5.9.3"
+  }
+}
