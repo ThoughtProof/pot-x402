@@ -29,11 +29,11 @@ import type { StakeLevel, TrustContext } from 'pot-sdk';
 /** ERC-8183 Job states */
 export type JobState = 'Open' | 'Funded' | 'Submitted' | 'Completed' | 'Rejected' | 'Expired';
 
-/** ERC-8183 function selectors */
+/** ERC-8183 function selectors (keccak256 of canonical signatures) */
 export const ERC8183_SELECTORS = {
-  complete: '0x7ecf2528',  // complete(uint256,bytes32,bytes)
-  reject: '0x6622e0d7',    // reject(uint256)
-  submit: '0x7e37b2a0',    // submit(uint256,bytes)
+  complete: '0xd75bbdf3',  // complete(uint256,bytes32,bytes)
+  reject: '0x41dd26f5',    // reject(uint256,bytes32,bytes)
+  submit: '0x9e63798d',    // submit(uint256,bytes32,bytes)
 } as const;
 
 /** Job context for verification */
