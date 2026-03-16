@@ -36,6 +36,11 @@ export type { MaiatAgentCheck, MaiatAgentLookup } from './maiat.js';
 // Re-export ERC-8183 integration (agentic commerce hooks)
 export { verifyJobCompletion, verifyJobRejection, ERC8183_SELECTORS } from './erc8183/index.js';
 export type { JobContext, JobState, HookVerificationResult, ERC8183HookOptions } from './erc8183/index.js';
+
+// Re-export Trust Feedback Loop (Maiat outcome reporting)
+// Credit: @JhiNResH (GitHub issue #1, feature request #4)
+export { reportToMaiat, createMaiatFeedback } from './feedback.js';
+export type { FeedbackConfig, VerificationOutcome, FeedbackResult } from './feedback.js';
 import type { StakeLevel, TrustContext } from 'pot-sdk';
 
 // Re-export for convenience
