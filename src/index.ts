@@ -37,6 +37,10 @@ export type { MaiatAgentCheck, MaiatAgentLookup } from './maiat.js';
 export { verifyJobCompletion, verifyJobRejection, ERC8183_SELECTORS } from './erc8183/index.js';
 export type { JobContext, JobState, HookVerificationResult, ERC8183HookOptions } from './erc8183/index.js';
 
+// Re-export OriginDAO integration (agent identity + trust grades)
+export { checkOrigin, originTrustWeight, buildOriginContext } from './origin.js';
+export type { OriginAgentLookup, OriginTrustStatus } from './origin.js';
+
 // Re-export Trust Feedback Loop (Maiat outcome reporting)
 // Credit: @JhiNResH (GitHub issue #1, feature request #4)
 export { reportToMaiat, createMaiatFeedback } from './feedback.js';
