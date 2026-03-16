@@ -32,6 +32,10 @@ export type { RNWYTrustCheck, RNWYReviewerAnalysis, RNWYReviewer } from './rnwy.
 // Re-export Maiat integration (behavioral trust scoring)
 export { checkMaiat, checkMaiatByAddress, getMaiatAgents, maiatReputationWeight, buildMaiatContext } from './maiat.js';
 export type { MaiatAgentCheck, MaiatAgentLookup } from './maiat.js';
+
+// Re-export ERC-8183 integration (agentic commerce hooks)
+export { verifyJobCompletion, verifyJobRejection, ERC8183_SELECTORS } from './erc8183/index.js';
+export type { JobContext, JobState, HookVerificationResult, ERC8183HookOptions } from './erc8183/index.js';
 import type { StakeLevel, TrustContext } from 'pot-sdk';
 
 // Re-export for convenience
