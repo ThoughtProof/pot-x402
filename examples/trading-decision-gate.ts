@@ -101,9 +101,10 @@ const STAKE_THRESHOLDS: Record<StakeLevel, number> = {
 async function verifyTradeDecision(
   trade: TradeDecision,
   providers: Array<{ name: string; model: string; apiKey: string }>,
+  config: GateConfig = {},
 ): Promise<TradeVerificationResult> {
   const startTime = Date.now();
-  const stakeLevel = detectTradeStakeLevel(trade);
+  const stakeLevel = detectTradeStakeLevel(trade, config);
   const threshold = STAKE_THRESHOLDS[stakeLevel];
 
   const output = `TRADING DECISION REVIEW
@@ -111,7 +112,7 @@ async function verifyTradeDecision(
 Action: ${trade.action} ${trade.asset}
 Amount: $${trade.amountUsd.toLocaleString()}
 Platform: ${trade.platform}
-Supervised: ${trade.humanSupervised ? 'yes — human is watching' : 'NO — autonomous, no human oversight'}
+Supervised: ${config.humanSupervised ? 'yes — human is watching' : 'NO — autonomous, no human oversight'}
 
 Agent's reasoning:
 "${trade.reasoning}"`;
@@ -187,7 +188,7 @@ async function main() {
     asset: 'ETH',
     amountUsd: 5000,
     platform: 'Binance',
-    // humanSupervised defaults to false — nobody is watching
+    // Note: humanSupervised is in gateConfig, NOT in trade — agent can't set it
     reasoning: 'ETH has been trending up for 3 days. Social sentiment is very positive. Several influencers mentioned it will hit $4K soon. Buying before it goes higher.',
   };
 
