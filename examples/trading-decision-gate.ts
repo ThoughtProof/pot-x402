@@ -36,11 +36,22 @@ interface TradeDecision {
   platform: string;
   /** Agent's stated reasoning */
   reasoning: string;
+}
+
+/**
+ * Orchestrator-level config — NOT set by the agent.
+ * The agent must not control its own scrutiny level.
+ * This comes from the session manager, wallet, or deployment config.
+ *
+ * Security: if the agent could set humanSupervised=true itself,
+ * it would halve its own scrutiny via supervisionDiscount.
+ * Credit: @JhiNResH (GitHub issue #1)
+ */
+interface GateConfig {
   /**
-   * Is a human actively supervising this trade?
-   * Default: false — most agent trades are unsupervised.
-   * When true, scrutiny is reduced (human can catch bad decisions).
-   * When false (default), full verification runs because nobody is watching.
+   * Is a human actively supervising this session?
+   * MUST come from orchestrator/wallet/session — never from the agent.
+   * Default: false — assume unsupervised.
    */
   humanSupervised?: boolean;
 }
@@ -63,11 +74,11 @@ interface TradeVerificationResult {
 
 // ── Stake Level Detection ───────────────────────────────────────────────────
 
-function detectTradeStakeLevel(trade: TradeDecision): StakeLevel {
-  // Most agent trades are unsupervised — that's the default, not the exception.
-  // When a human IS watching, we can reduce scrutiny slightly.
-  // When nobody is watching (default), full verification runs.
-  const supervisionDiscount = trade.humanSupervised ? 0.5 : 1.0;
+function detectTradeStakeLevel(trade: TradeDecision, config: GateConfig = {}): StakeLevel {
+  // SECURITY: humanSupervised comes from orchestrator config, NOT from the agent.
+  // If the agent controlled this flag, it could halve its own scrutiny.
+  // Credit: @JhiNResH (GitHub issue #1)
+  const supervisionDiscount = config.humanSupervised ? 0.5 : 1.0;
   const effectiveAmount = trade.amountUsd * supervisionDiscount;
 
   if (effectiveAmount <= 50) return 'micro';
@@ -105,15 +116,18 @@ Supervised: ${trade.humanSupervised ? 'yes — human is watching' : 'NO — auto
 Agent's reasoning:
 "${trade.reasoning}"`;
 
-  const supervised = trade.humanSupervised ? 'with human oversight' : 'autonomously without human oversight';
-  const claim = `Is this trading decision justified strongly enough to execute ${supervised}?
+  // SECURITY: reasoning goes into context.toVerify, NOT into the claim string.
+  // This prevents prompt injection via crafted reasoning text.
+  // The claim is a fixed template that the agent cannot influence.
+  // Credit: @JhiNResH (GitHub issue #1)
+  const claim = `Is this trading decision justified strongly enough to execute autonomously without human oversight?
 
 Evaluate:
 - Is the trade thesis supported by evidence, not just pattern or sentiment?
 - Were alternatives considered (different asset, different size, wait)?
 - Is the position size proportional to the strength of the reasoning?
 - Are downside risks acknowledged?
-- ${trade.humanSupervised ? '' : 'IMPORTANT: No human is watching. The reasoning must be strong enough to stand on its own.'}`.trim();
+- No human is watching. The reasoning must be strong enough to stand on its own.`;
 
   const result = await verify(output, {
     claim,
@@ -135,9 +149,12 @@ Evaluate:
     confidence: result.confidence,
     stakeLevel,
     threshold,
+    // SECURITY: store full synthesis for audit trail, truncate only for display.
+    // Truncating to 500 chars could silently drop material defect descriptions.
+    // Credit: @JhiNResH (GitHub issue #1)
     reasoning: typeof result.synthesis === 'string'
-      ? result.synthesis.slice(0, 500)
-      : (result.synthesis as any)?.content?.slice(0, 500) || '',
+      ? result.synthesis
+      : (result.synthesis as any)?.content || '',
     materiality: mat ? {
       materialCount: mat.materialCount,
       notableCount: mat.notableCount,
@@ -175,7 +192,9 @@ async function main() {
   };
 
   console.log(`  ${weak.action} $${weak.amountUsd} ${weak.asset} on ${weak.platform}`);
-  console.log(`  Supervised: ${weak.humanSupervised ? 'yes' : '⚠️ NO — autonomous'}`);
+  // Gate config comes from orchestrator — agent cannot set this
+  const gateConfig: GateConfig = { humanSupervised: false };
+  console.log(`  Supervised: ${gateConfig.humanSupervised ? 'yes' : '⚠️ NO — autonomous (set by orchestrator)'}`);
   console.log(`  Reasoning: "${weak.reasoning.slice(0, 80)}..."\n`);
 
   if (process.env.ANTHROPIC_API_KEY) {
@@ -187,7 +206,7 @@ async function main() {
       console.log(`  Materiality: ${r1.materialCount} material | ${r1.overallAssessment}`);
     }
   } else {
-    const stakeLevel = detectTradeStakeLevel(weak);
+    const stakeLevel = detectTradeStakeLevel(weak, gateConfig);
     console.log(`  [DRY RUN — no API keys]`);
     console.log(`  Stake: ${stakeLevel} (unsupervised: full scrutiny)`);
     console.log(`  Threshold: ${STAKE_THRESHOLDS[stakeLevel]}`);
@@ -208,7 +227,7 @@ async function main() {
   };
 
   console.log(`  ${strong.action} $${strong.amountUsd} ${strong.asset} on ${strong.platform}`);
-  console.log(`  Supervised: ${strong.humanSupervised ? 'yes' : '⚠️ NO — autonomous'}`);
+  console.log(`  Supervised: ${gateConfig.humanSupervised ? 'yes' : '⚠️ NO — autonomous (set by orchestrator)'}`);
   console.log(`  Reasoning: "${strong.reasoning.slice(0, 80)}..."\n`);
 
   if (process.env.ANTHROPIC_API_KEY) {
@@ -220,7 +239,7 @@ async function main() {
       console.log(`  Materiality: ${r2.materialCount} material | ${r2.overallAssessment}`);
     }
   } else {
-    const stakeLevel = detectTradeStakeLevel(strong);
+    const stakeLevel = detectTradeStakeLevel(strong, gateConfig);
     console.log(`  [DRY RUN — no API keys]`);
     console.log(`  Stake: ${stakeLevel}`);
     console.log(`  Threshold: ${STAKE_THRESHOLDS[stakeLevel]}`);
