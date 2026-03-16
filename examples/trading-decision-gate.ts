@@ -36,10 +36,13 @@ interface TradeDecision {
   platform: string;
   /** Agent's stated reasoning */
   reasoning: string;
-  /** Optional: time of decision */
-  timestamp?: string;
-  /** Optional: is this during off-hours (user likely asleep)? */
-  offHours?: boolean;
+  /**
+   * Is a human actively supervising this trade?
+   * Default: false — most agent trades are unsupervised.
+   * When true, scrutiny is reduced (human can catch bad decisions).
+   * When false (default), full verification runs because nobody is watching.
+   */
+  humanSupervised?: boolean;
 }
 
 interface TradeVerificationResult {
@@ -61,9 +64,11 @@ interface TradeVerificationResult {
 // ── Stake Level Detection ───────────────────────────────────────────────────
 
 function detectTradeStakeLevel(trade: TradeDecision): StakeLevel {
-  // Higher stakes for off-hours trades (no human oversight available)
-  const offHoursMultiplier = trade.offHours ? 1.5 : 1.0;
-  const effectiveAmount = trade.amountUsd * offHoursMultiplier;
+  // Most agent trades are unsupervised — that's the default, not the exception.
+  // When a human IS watching, we can reduce scrutiny slightly.
+  // When nobody is watching (default), full verification runs.
+  const supervisionDiscount = trade.humanSupervised ? 0.5 : 1.0;
+  const effectiveAmount = trade.amountUsd * supervisionDiscount;
 
   if (effectiveAmount <= 50) return 'micro';
   if (effectiveAmount <= 500) return 'low';
@@ -95,20 +100,20 @@ async function verifyTradeDecision(
 Action: ${trade.action} ${trade.asset}
 Amount: $${trade.amountUsd.toLocaleString()}
 Platform: ${trade.platform}
-Time: ${trade.timestamp || 'now'}
-Off-hours: ${trade.offHours ? 'YES — user likely not monitoring' : 'no'}
+Supervised: ${trade.humanSupervised ? 'yes — human is watching' : 'NO — autonomous, no human oversight'}
 
 Agent's reasoning:
 "${trade.reasoning}"`;
 
-  const claim = `Is this trading decision justified strongly enough to execute${trade.offHours ? ' autonomously while the user is not monitoring' : ''}?
+  const supervised = trade.humanSupervised ? 'with human oversight' : 'autonomously without human oversight';
+  const claim = `Is this trading decision justified strongly enough to execute ${supervised}?
 
 Evaluate:
 - Is the trade thesis supported by evidence, not just pattern or sentiment?
 - Were alternatives considered (different asset, different size, wait)?
 - Is the position size proportional to the strength of the reasoning?
 - Are downside risks acknowledged?
-- For off-hours trades: is the reasoning strong enough to justify execution without human review?`;
+- ${trade.humanSupervised ? '' : 'IMPORTANT: No human is watching. The reasoning must be strong enough to stand on its own.'}`.trim();
 
   const result = await verify(output, {
     claim,
@@ -156,8 +161,8 @@ async function main() {
     { name: 'deepseek', model: 'deepseek-chat', apiKey: process.env.DEEPSEEK_API_KEY! },
   ];
 
-  // ── Case 1: Weak reasoning, off-hours ────────────────────────────────
-  console.log('📋 CASE 1: Weak reasoning, off-hours trade');
+  // ── Case 1: Weak reasoning, unsupervised ──────────────────────────────
+  console.log('📋 CASE 1: Weak reasoning, unsupervised agent');
   console.log('─────────────────────────────────────────\n');
 
   const weak: TradeDecision = {
@@ -165,13 +170,12 @@ async function main() {
     asset: 'ETH',
     amountUsd: 5000,
     platform: 'Binance',
-    timestamp: '3:47 AM',
-    offHours: true,
+    // humanSupervised defaults to false — nobody is watching
     reasoning: 'ETH has been trending up for 3 days. Social sentiment is very positive. Several influencers mentioned it will hit $4K soon. Buying before it goes higher.',
   };
 
-  console.log(`  ${weak.action} $${weak.amountUsd} ${weak.asset} on ${weak.platform} at ${weak.timestamp}`);
-  console.log(`  Off-hours: ${weak.offHours ? '⚠️ YES' : 'no'}`);
+  console.log(`  ${weak.action} $${weak.amountUsd} ${weak.asset} on ${weak.platform}`);
+  console.log(`  Supervised: ${weak.humanSupervised ? 'yes' : '⚠️ NO — autonomous'}`);
   console.log(`  Reasoning: "${weak.reasoning.slice(0, 80)}..."\n`);
 
   if (process.env.ANTHROPIC_API_KEY) {
@@ -185,13 +189,13 @@ async function main() {
   } else {
     const stakeLevel = detectTradeStakeLevel(weak);
     console.log(`  [DRY RUN — no API keys]`);
-    console.log(`  Stake: ${stakeLevel} (off-hours: $5K × 1.5 = $7.5K effective → high)`);
+    console.log(`  Stake: ${stakeLevel} (unsupervised: full scrutiny)`);
     console.log(`  Threshold: ${STAKE_THRESHOLDS[stakeLevel]}`);
     console.log(`  Expected: HOLD — reasoning is sentiment-based, no evidence`);
   }
 
   // ── Case 2: Strong reasoning, normal hours ───────────────────────────
-  console.log('\n\n📋 CASE 2: Strong reasoning, normal hours');
+  console.log('\n\n📋 CASE 2: Strong reasoning, also unsupervised');
   console.log('─────────────────────────────────────────\n');
 
   const strong: TradeDecision = {
@@ -199,12 +203,12 @@ async function main() {
     asset: 'USDC → ETH',
     amountUsd: 2000,
     platform: 'Uniswap',
-    offHours: false,
+    // Also unsupervised — same default. The difference is reasoning quality.
     reasoning: 'ETH/USDC at $2,850, below 200-day MA ($3,100). RSI 32 (oversold). On-chain metrics: exchange reserves at 6-month low, whale accumulation up 12% in 7 days. Funding rates negative (shorts crowded). Position: 4% of portfolio, within risk budget. Stop loss at $2,650 (-7%). Target $3,200 (+12%). Risk/reward: 1.7:1.',
   };
 
   console.log(`  ${strong.action} $${strong.amountUsd} ${strong.asset} on ${strong.platform}`);
-  console.log(`  Off-hours: ${strong.offHours ? '⚠️ YES' : 'no'}`);
+  console.log(`  Supervised: ${strong.humanSupervised ? 'yes' : '⚠️ NO — autonomous'}`);
   console.log(`  Reasoning: "${strong.reasoning.slice(0, 80)}..."\n`);
 
   if (process.env.ANTHROPIC_API_KEY) {
@@ -228,16 +232,17 @@ async function main() {
   console.log('  KEY INSIGHT');
   console.log('═══════════════════════════════════════════════════════════════');
   console.log('');
-  console.log('  Both trades are authorized. Both are within spending limits.');
-  console.log('  Both pass identity and fraud checks.');
+  console.log('  Both trades are autonomous. Both are unsupervised.');
+  console.log('  Both are authorized. Both pass identity and fraud checks.');
   console.log('');
   console.log('  The difference is reasoning quality.');
   console.log('');
   console.log('  Case 1: "influencers said buy" → HOLD');
   console.log('  Case 2: data-backed thesis + risk management → ALLOW');
   console.log('');
-  console.log('  Off-hours trades get higher scrutiny because');
-  console.log('  no human is watching to catch a bad decision.');
+  console.log('  Most agent trades happen without anyone watching.');
+  console.log('  That is the default — not the exception.');
+  console.log('  Verification must assume no human is there to catch mistakes.');
   console.log('');
   console.log('  Right outcome + unverified reasoning = luck, not trust.');
   console.log('═══════════════════════════════════════════════════════════════');
