@@ -27,10 +27,19 @@ export interface FeedbackConfig {
 export interface VerificationOutcome {
   /** Job or transaction ID */
   jobId: string;
+  /** Agent's wallet address (0x...) — required by Maiat API */
+  agentAddress: string;
   /** Was the decision allowed? */
   allowed: boolean;
   /** Confidence score */
   confidence: number;
+  /**
+   * On-chain transaction hash — REQUIRED by Maiat API.
+   * Must come from AFTER settlement, not from verification.
+   * Without txHash, anyone can spam fake outcomes.
+   * Credit: @JhiNResH (GitHub issue #1, comment 2)
+   */
+  txHash: string;
   /** Were there material defects? */
   hasMaterialDefect?: boolean;
   /** Overall assessment */
@@ -87,10 +96,20 @@ export async function reportToMaiat(
   const baseUrl = config.baseUrl || 'https://app.maiat.io';
   const maiatOutcome = mapOutcome(outcome);
 
+  // SECURITY: agentAddress + txHash required by Maiat API.
+  // reporter must be the agent's wallet, not a string like "thoughtproof".
+  // txHash proves the trade actually happened on-chain.
+  // Credit: @JhiNResH (GitHub issue #1, comment 2)
+  if (!outcome.txHash) {
+    if (config.debug) console.warn('[feedback] WARNING: no txHash — Maiat will reject. Report after settlement, not after verification.');
+    return { success: false, message: 'txHash required. Report after settlement (onAfterSettle), not after verification.' };
+  }
+
   const body = {
     jobId: outcome.jobId,
+    agentAddress: outcome.agentAddress,
     outcome: maiatOutcome,
-    reporter: 'thoughtproof',
+    txHash: outcome.txHash,
     note: outcome.note || `ThoughtProof ${outcome.allowed ? 'ALLOW' : 'HOLD'}: confidence ${outcome.confidence.toFixed(2)}${
       outcome.hasMaterialDefect ? ', material defects found' : ''
     }${outcome.overallAssessment ? `, assessment: ${outcome.overallAssessment}` : ''}`,
@@ -130,26 +149,42 @@ export async function reportToMaiat(
 }
 
 /**
- * Create a feedback callback for use with ThoughtProof hooks.
+ * Create a feedback callback for use AFTER settlement (onAfterSettle).
  *
- * Pass this as the `onVerification` callback in createThoughtProofHook()
- * or verifyJobCompletion() to automatically report results to Maiat.
+ * IMPORTANT: Do NOT use this in onVerification or onBeforeSettle.
+ * Maiat requires txHash (on-chain proof) which only exists after settlement.
+ * The feedback loop needs ground truth (did the trade execute?), not predictions.
+ *
+ * Credit: @JhiNResH — "The loop needs ground truth, not predictions."
  *
  * @example
  * ```typescript
- * import { createThoughtProofHook } from '@pot-sdk2/x402';
  * import { createMaiatFeedback } from '@pot-sdk2/x402/feedback';
  *
- * facilitator.onBeforeSettle(createThoughtProofHook({
- *   providers: [...],
- *   onVerification: createMaiatFeedback({ debug: true }),
- * }));
+ * // Use in onAfterSettle — NOT in onBeforeSettle or onVerification
+ * facilitator.onAfterSettle(async (context) => {
+ *   const feedback = createMaiatFeedback({ debug: true });
+ *   await feedback({
+ *     allowed: true,
+ *     confidence: 0.82,
+ *     agentAddress: context.paymentPayload.agentWallet,
+ *     txHash: context.result.transaction,
+ *   });
+ * });
  * ```
  */
 export function createMaiatFeedback(config: FeedbackConfig = {}) {
-  return async (result: { allowed: boolean; confidence: number; materiality?: any }, jobId?: string) => {
+  return async (result: {
+    allowed: boolean;
+    confidence: number;
+    agentAddress: string;
+    txHash: string;
+    materiality?: any;
+  }, jobId?: string) => {
     await reportToMaiat({
       jobId: jobId || `tx-${Date.now()}`,
+      agentAddress: result.agentAddress,
+      txHash: result.txHash,
       allowed: result.allowed,
       confidence: result.confidence,
       hasMaterialDefect: result.materiality?.hasMaterialDefect,
