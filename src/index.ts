@@ -30,8 +30,8 @@ export { checkRNWY, analyzeReviewers, reputationWeight, buildTrustedContext, wei
 export type { RNWYTrustCheck, RNWYReviewerAnalysis, RNWYReviewer } from './rnwy.js';
 
 // Re-export Maiat integration (behavioral trust scoring)
-export { checkMaiat, maiatReputationWeight, buildMaiatContext } from './maiat.js';
-export type { MaiatAgentCheck } from './maiat.js';
+export { checkMaiat, checkMaiatByAddress, getMaiatAgents, maiatReputationWeight, buildMaiatContext } from './maiat.js';
+export type { MaiatAgentCheck, MaiatAgentLookup } from './maiat.js';
 import type { StakeLevel, TrustContext } from 'pot-sdk';
 
 // Re-export for convenience
