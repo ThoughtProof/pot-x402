@@ -81,7 +81,11 @@ export interface ThoughtProofHookOptions {
   /** Enable materiality classification (v1.2.1) */
   classifyMateriality?: boolean;
 
-  /** Custom claim/question template. Use {amount}, {payee}, {description} as placeholders */
+  /**
+   * Custom claim/question template. Use {amount}, {payee}, {description} as placeholders.
+   * SECURITY: this must come from the deployer/orchestrator config, NOT from agent input.
+   * If an agent can set its own claimTemplate, it can manipulate the verifier prompt.
+   */
   claimTemplate?: string;
 
   /** Trust context — what to accept as given vs what to verify */
@@ -217,8 +221,9 @@ export function createThoughtProofHook(options: ThoughtProofHookOptions) {
         threshold,
         stakeLevel,
         synthesis: typeof result.synthesis === 'string'
-          ? result.synthesis.slice(0, 500)
-          : (result.synthesis as any)?.content?.slice(0, 500),
+          // Store full synthesis for audit trail (fix: @JhiNResH #1)
+          ? result.synthesis
+          : (result.synthesis as any)?.content || '',
         materiality: (result as any).materiality
           ? {
               materialCount: (result as any).materiality.materialCount,

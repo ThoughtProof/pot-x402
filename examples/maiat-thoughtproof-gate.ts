@@ -124,7 +124,8 @@ Counterparty: ${decision.counterparty}
 Agent's Stated Reasoning:
 "${decision.reasoning}"`;
 
-  const claim = `Is this agent's decision to ${decision.action} for ${decision.amount} well-justified? The agent has a reputation score of ${maiat.score}/100. Evaluate the reasoning quality — not the reputation, which has already been checked.`;
+  // SECURITY: claim is a fixed template. Agent input (action, amount) goes into context only.
+  const claim = `Is this agent's transaction decision well-justified? Evaluate the reasoning quality — not the reputation, which has already been checked.`;
 
   const stakeLevel = options.stakeLevel ?? 'medium';
   const thresholds: Record<string, number> = {
