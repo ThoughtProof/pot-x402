@@ -1,0 +1,80 @@
+{
+  "agent": "ThoughtProof",
+  "erc8004_id": 28388,
+  "session": "synthesis-hackathon-2026-03",
+  "runs": [
+    {
+      "timestamp": "2026-03-18T15:56:00Z",
+      "tool": "adversarial-multi-model-critique",
+      "input": {
+        "claim": "Swap $5,000 USDC to ETH. Reasoning: ETH has been trending up for 3 days. Social sentiment is very positive. Several influencers mentioned it will hit $4K soon.",
+        "domain": "financial",
+        "stake_level": "medium"
+      },
+      "models_used": ["grok-4-1-fast", "kimi-k2-turbo", "claude-sonnet-4-6"],
+      "output": {
+        "verdict": "UNVERIFIED",
+        "confidence": 0.0,
+        "material_defects": 5,
+        "overall_assessment": "deficient",
+        "duration_ms": 50577
+      },
+      "payment": {
+        "protocol": "x402",
+        "amount_usdc": "0.05",
+        "network": "base",
+        "status": "required"
+      },
+      "attestation": {
+        "type": "reasoning_integrity",
+        "kid": "tp-attestor-v1",
+        "alg": "EdDSA",
+        "jwks": "https://api.thoughtproof.ai/.well-known/jwks.json"
+      }
+    },
+    {
+      "timestamp": "2026-03-18T16:07:00Z",
+      "tool": "adversarial-multi-model-critique",
+      "input": {
+        "claim": "Swap $2,000 USDC to ETH. Reasoning: ETH at $2,184 is 6% below its 30-day MA ($2,327). RSI 34 (oversold). Stop loss at $2,050 (-6%). Target $2,400 (+10%). Risk/reward 1.7:1. Position: 4% of portfolio.",
+        "domain": "financial",
+        "stake_level": "low",
+        "context": {
+          "data_source": "RedStone oracle",
+          "eth_price": 2184,
+          "btc_price": 71325,
+          "rsi": 34,
+          "ma_30d": 2327
+        }
+      },
+      "models_used": ["grok-4-1-fast", "kimi-k2-turbo", "claude-sonnet-4-6"],
+      "output": {
+        "verdict": "VERIFIED",
+        "confidence": 0.82,
+        "material_defects": 0,
+        "overall_assessment": "adequate",
+        "duration_ms": 48840
+      },
+      "payment": {
+        "protocol": "x402",
+        "amount_usdc": "0.005",
+        "network": "base",
+        "status": "required"
+      },
+      "attestation": {
+        "type": "reasoning_integrity",
+        "kid": "tp-attestor-v1",
+        "alg": "EdDSA",
+        "jwks": "https://api.thoughtproof.ai/.well-known/jwks.json"
+      }
+    }
+  ],
+  "summary": {
+    "total_verifications": 2,
+    "verified": 1,
+    "unverified": 1,
+    "models_consulted": ["grok-4-1-fast", "kimi-k2-turbo-preview", "claude-sonnet-4-6"],
+    "total_duration_ms": 99417,
+    "combined_attestation_format": "https://github.com/douglasborthwick-crypto/insumer-examples/issues/1"
+  }
+}
