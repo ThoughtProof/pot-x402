@@ -41,7 +41,14 @@
     "erc-8004",
     "x402",
     "mpp",
-    "insumer-multi-attestation-format"
+    "multi-attestation-format"
   ],
-  "npm": "thoughtproof-sdk@0.2.1"
+  "npm": "thoughtproof-sdk@0.2.1",
+  "specs": {
+    "combined_attestation": "https://github.com/douglasborthwick-crypto/insumer-examples/issues/1",
+    "erc8183": "https://eips.ethereum.org/EIPS/eip-8183",
+    "erc8004": "https://eips.ethereum.org/EIPS/eip-8004",
+    "x402": "https://github.com/coinbase/x402",
+    "mpp": "https://github.com/tempoxyz/mpp-specs"
+  }
 }

@@ -23,13 +23,17 @@
         "protocol": "x402",
         "amount_usdc": "0.05",
         "network": "base",
-        "status": "required"
+        "payment_intent": "pi_apOkJRpfe-e2eizP",
+        "recipient": "0xAB9f84864662f980614bD1453dB9950Ef2b82E83",
+        "token": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
+        "note": "x402 payment required — agent pays before receiving ALLOW/HOLD verdict"
       },
       "attestation": {
         "type": "reasoning_integrity",
         "kid": "tp-attestor-v1",
         "alg": "EdDSA",
-        "jwks": "https://api.thoughtproof.ai/.well-known/jwks.json"
+        "jwks": "https://api.thoughtproof.ai/.well-known/jwks.json",
+        "combined_format": "https://github.com/douglasborthwick-crypto/insumer-examples/issues/1"
       }
     },
     {
@@ -40,9 +44,9 @@
         "domain": "financial",
         "stake_level": "low",
         "context": {
-          "data_source": "RedStone oracle",
-          "eth_price": 2184,
-          "btc_price": 71325,
+          "data_source": "RedStone oracle — live price feed",
+          "eth_price_usd": 2184,
+          "btc_price_usd": 71325,
           "rsi": 34,
           "ma_30d": 2327
         }
@@ -59,13 +63,17 @@
         "protocol": "x402",
         "amount_usdc": "0.005",
         "network": "base",
-        "status": "required"
+        "payment_intent": "pi_14WlQdEt_SLfGxB8",
+        "recipient": "0xAB9f84864662f980614bD1453dB9950Ef2b82E83",
+        "token": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
+        "note": "x402 payment required — agent pays before receiving ALLOW/HOLD verdict"
       },
       "attestation": {
         "type": "reasoning_integrity",
         "kid": "tp-attestor-v1",
         "alg": "EdDSA",
-        "jwks": "https://api.thoughtproof.ai/.well-known/jwks.json"
+        "jwks": "https://api.thoughtproof.ai/.well-known/jwks.json",
+        "combined_format": "https://github.com/douglasborthwick-crypto/insumer-examples/issues/1"
       }
     }
   ],
@@ -75,6 +83,7 @@
     "unverified": 1,
     "models_consulted": ["grok-4-1-fast", "kimi-k2-turbo-preview", "claude-sonnet-4-6"],
     "total_duration_ms": 99417,
-    "combined_attestation_format": "https://github.com/douglasborthwick-crypto/insumer-examples/issues/1"
+    "combined_attestation_spec": "https://github.com/douglasborthwick-crypto/insumer-examples/issues/1",
+    "reference_verifier": "https://github.com/douglasborthwick-crypto/insumer-examples/blob/main/multi-attest-verify.js"
   }
 }
