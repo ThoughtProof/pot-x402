@@ -5,6 +5,8 @@
 [![npm](https://img.shields.io/npm/v/@pot-sdk2/x402)](https://www.npmjs.com/package/@pot-sdk2/x402)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
+[![Thoughtproof-mcp MCP server](https://glama.ai/mcp/servers/ThoughtProof/pot-x402/badges/card.svg)](https://glama.ai/mcp/servers/ThoughtProof/pot-x402)
+
 ## The Problem
 
 x402 enables AI agents to pay for services autonomously. The facilitator verifies that the **payment is valid** (correct signature, sufficient balance, right network).
