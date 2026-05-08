@@ -3,11 +3,20 @@
   "description": "Adversarial multi-model reasoning verification for AI agents. Challenges agent decisions with Claude, Grok, and DeepSeek before settlement.",
   "version": "1.3.7",
   "wallet": "0x4BedAC0413e309818D7626555077821B22D7292b",
-  "chain": "base-mainnet",
   "erc8004": {
-    "agent_id": 28388,
+    "agent_id": 37477,
+    "chain": "base",
     "registry": "0x8004A169FB4a3325136EB29fA0ceB6D2e539a432",
-    "scan": "https://www.8004scan.io/agents/28388"
+    "scan": "https://www.8004scan.io/agents/base/37477",
+    "legacy_registrations": [
+      {
+        "agent_id": 28388,
+        "chain": "ethereum",
+        "scan": "https://www.8004scan.io/agents/ethereum/28388",
+        "status": "kept-active-not-deprecated",
+        "note": "Original Ethereum registration; Base #37477 is the current primary."
+      }
+    ]
   },
   "api": {
     "base_url": "https://api.thoughtproof.ai",
