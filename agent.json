@@ -1,7 +1,7 @@
 {
   "name": "ThoughtProof",
   "description": "Adversarial multi-model reasoning verification for AI agents. Challenges agent decisions with Claude, Grok, and DeepSeek before settlement.",
-  "version": "1.3.7",
+  "version": "1.4.0",
   "wallet": "0x4BedAC0413e309818D7626555077821B22D7292b",
   "erc8004": {
     "agent_id": 37477,
@@ -21,7 +21,7 @@
   "api": {
     "base_url": "https://api.thoughtproof.ai",
     "openapi_url": "https://api.thoughtproof.ai/openapi.json",
-    "openapi_version": "1.3.7",
+    "openapi_version": "1.4.0",
     "openapi_note": "OpenAPI is canonical. Endpoints listed below are the publicly callable subset; full surface (including auth-gated and POST-only routes) is described in openapi.json.",
     "payment": "x402",
     "payment_asset": "USDC",
