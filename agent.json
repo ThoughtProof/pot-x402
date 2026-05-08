@@ -11,6 +11,9 @@
   },
   "api": {
     "base_url": "https://api.thoughtproof.ai",
+    "openapi_url": "https://api.thoughtproof.ai/openapi.json",
+    "openapi_version": "1.3.7",
+    "openapi_note": "OpenAPI is canonical. Endpoints listed below are the publicly callable subset; full surface (including auth-gated and POST-only routes) is described in openapi.json.",
     "payment": "x402",
     "payment_asset": "USDC",
     "payment_network": "base",
@@ -18,7 +21,10 @@
       "check": "POST /v1/check",
       "health": "GET /v1/health",
       "trustscore": "GET /v1/trustscore/:agentId",
-      "badge": "GET /v1/badge/:agentId.svg"
+      "badge": "GET /v1/badge/:agentId.svg",
+      "issuer_wallet": "GET /v1/issuer/wallet/:address",
+      "openapi": "GET /openapi.json",
+      "jwks": "GET /.well-known/jwks.json"
     }
   },
   "skill": "https://thoughtproof.ai/skill.md",
