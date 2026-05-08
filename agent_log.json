@@ -1,6 +1,7 @@
 {
   "agent": "ThoughtProof",
-  "erc8004_id": 28388,
+  "erc8004_id": 37477,
+  "erc8004_chain": "base",
   "session": "synthesis-hackathon-2026-03",
   "runs": [
     {
